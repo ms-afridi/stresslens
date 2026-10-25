@@ -1,0 +1,16 @@
+
+# Local Python environment
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Secrets and environment variables
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Local development files
+.DS_Store
+Thumbs.db
