@@ -1,31 +1,33 @@
 # StressLens
-### Exploring Synthetic-Image Detection, Model Reliability, and Explainable AI
+### Investigating Synthetic-Image Detection, Model Failure, Robustness, and Explainable AI
 
-**StressLens** is a research-oriented prototype for exploring the reliability of AI-generated image detection systems. It combines two pretrained image classifiers with image-transformation tests, model-comparison analysis, and human-readable reporting to investigate an important question:
+StressLens is an experimental research prototype designed to investigate the reliability of AI-generated image detection systems. It combines two pretrained image classifiers with image-transformation tests, comparative model analysis, and structured reporting to explore how detection systems behave when their predictions may be unreliable.
 
-> **Can we trust an AI-generated image detector when different models disagree or their predictions change under different conditions?**
+The project focuses on a central research question:
 
-Rather than treating a detector's prediction as definitive proof, StressLens explores how model outputs, prediction scores, robustness tests, and explanatory reports can help users understand the limitations of synthetic-media detection.
+> **How can we identify, evaluate, and explain systematic failures in AI-generated image detection systems, particularly when models produce misleading or contradictory predictions?**
 
-**Project status:** Early-stage research prototype. Detection accuracy, calibration, and generalizability require systematic evaluation.
+StressLens is not presented as a fully reliable deepfake detection solution. Instead, it provides a practical foundation for investigating model disagreement, robustness, uncertainty, and explainability in synthetic-media detection.
+
+**Project status:** Early-stage research prototype. The observed detector failure patterns are preliminary and require systematic evaluation on labelled datasets.
 
 ---
 
 ## Table of Contents
 
 - [Motivation](#motivation)
-- [Key Objectives](#key-objectives)
+- [Research Objectives](#research-objectives)
 - [How StressLens Works](#how-stresslens-works)
 - [Detection Models](#detection-models)
-- [Robustness and Reliability Analysis](#robustness-and-reliability-analysis)
-- [Observed Research Problem](#observed-research-problem)
+- [Observed Model Failure Pattern](#observed-model-failure-pattern)
+- [Robustness Testing](#robustness-testing)
 - [Research Gaps and Limitations](#research-gaps-and-limitations)
-- [Future Research Roadmap](#future-research-roadmap)
+- [Future Research and Proposed Solutions](#future-research-and-proposed-solutions)
 - [Project Structure](#project-structure)
 - [Installation](#installation)
-- [Running StressLens](#running-stresslens)
+- [Run the Application](#run-the-application)
 - [Responsible Use](#responsible-use)
-- [Research Direction](#research-direction)
+- [Research Significance](#research-significance)
 - [Acknowledgements](#acknowledgements)
 - [License](#license)
 
@@ -33,216 +35,276 @@ Rather than treating a detector's prediction as definitive proof, StressLens exp
 
 ## Motivation
 
-AI-generated images are becoming increasingly realistic, making it more difficult to distinguish synthetic content from authentic photographs. Such content can be misused in misinformation, impersonation, fraud, and other forms of social engineering.
+AI image-generation systems can now produce highly realistic images. Although these technologies have many beneficial applications, synthetic media can also be misused for misinformation, impersonation, fraud, and social engineering.
 
-Although machine-learning models can help identify synthetic media, their outputs are not infallible. Performance may vary across image generators, datasets, compression levels, image transformations, and real-world deployment conditions.
+Automated image detectors offer one way to examine potentially synthetic content. However, a detector's prediction is not necessarily correct, and its performance may deteriorate when it encounters unfamiliar image generators, different image-processing pipelines, or data outside its training distribution.
 
-Three challenges motivate StressLens:
+During exploratory testing of StressLens, a concerning pattern was observed: the primary detector appeared to classify images believed to be real as fake, while the secondary detector appeared to classify an AI-generated test image as human-generated.
 
-1. **Model disagreement:** Different detectors can produce conflicting predictions for the same image.
-2. **Robustness:** Image transformations can affect a detector's prediction scores or classification.
-3. **Explainability and uncertainty:** A prediction score alone does not necessarily tell a user whether a result is reliable or why a model reached its decision.
+This raised a broader question: **What is the value of an AI detector if its predictions appear systematically misleading, and how can such failures be detected before users rely on its outputs?**
 
-StressLens provides a practical starting point for examining these challenges through a reproducible analysis workflow.
+StressLens was developed as an initial platform for exploring this problem.
 
-## Key Objectives
+## Research Objectives
 
-- Compare predictions from two pretrained synthetic-image detection models.
-- Examine differences between their predicted labels and reported scores.
-- Test prediction stability under image transformations.
-- Investigate localized sensitivity using an occlusion-based analysis.
-- Generate structured reliability reports that make results easier to inspect.
-- Identify limitations that motivate future work in AI Security, robustness evaluation, and Explainable AI (XAI).
+The current project aims to:
+
+- Compare predictions from two pretrained AI-image detection models.
+- Investigate apparent systematic misclassification and disagreement between models.
+- Examine changes in model predictions and scores under common image transformations.
+- Explore occlusion-based testing to identify regions that may influence model outputs.
+- Present detector results and limitations in structured, human-readable reports.
+- Identify methodological improvements for evaluating reliability, robustness, uncertainty, and explainability.
 
 ## How StressLens Works
 
-The prototype follows a pipeline from image input to comparative analysis and reporting.
+StressLens follows a comparative image-analysis workflow.
 
-1. **Image input:** The user supplies an image for analysis.
+1. **Image input:** A user provides an image for analysis.
 2. **Primary detection:** The image is passed to the primary pretrained classifier.
-3. **Secondary detection:** The same image is evaluated using an independent pretrained classifier.
-4. **Comparative analysis:** The system examines predicted labels and model-reported scores.
-5. **Robustness testing:** The image is transformed through operations such as cropping, blurring, JPEG compression, resizing, and occlusion.
-6. **Reliability analysis:** Changes in predictions and scores are summarized to help assess model stability.
-7. **Reporting:** The system produces a structured report containing model outputs, test observations, and limitations.
+3. **Secondary detection:** The same image is evaluated using a second pretrained classifier.
+4. **Prediction comparison:** The application compares predicted labels and reported scores.
+5. **Transformation testing:** Modified versions of the image are evaluated using operations such as cropping, blurring, JPEG compression, and resizing.
+6. **Occlusion analysis:** Selected image regions are hidden and the resulting score changes are examined.
+7. **Reliability reporting:** The application organizes the observations into a structured report intended to make model behaviour easier to inspect.
 
-The workflow is designed to encourage critical interpretation of detector outputs rather than blind reliance on a single classification.
+This workflow helps expose differences between models and sensitivity to input changes. It does not independently establish whether an image is authentic.
 
 ## Detection Models
 
-StressLens currently uses two pretrained Hugging Face image-classification models.
+StressLens currently integrates two pretrained image-classification models published on Hugging Face.
 
 ### 1. Primary detector
 
 **Model:** [`dima806/ai_vs_real_image_detection`](https://huggingface.co/dima806/ai_vs_real_image_detection)
 
-This model classifies images into real and fake categories. StressLens uses its output as one source of evidence when assessing whether an image may be AI-generated.
+This model classifies images using real and fake categories. StressLens uses its output as one source of evidence when investigating whether an image may be AI-generated.
 
-The model's prediction should not be interpreted as ground truth. Its performance depends on the images and generation methods encountered during training and evaluation, and may not generalize to newer image-generation systems.
+During exploratory testing, the primary detector appeared to predict **FAKE even for images believed to be real**. If confirmed across a representative evaluation dataset, this behaviour would indicate a significant reliability problem.
+
+Potential explanations to investigate include:
+
+- Poor generalization to the images being tested.
+- Dataset bias or a mismatch between training and evaluation distributions.
+- Differences in image preprocessing.
+- Incorrect class-index interpretation or score extraction in the application.
+- Limitations associated with the image-generation methods represented in the test data.
+
+These are hypotheses, not established causes. The model's raw outputs and label mappings must be checked before drawing conclusions.
 
 ### 2. Secondary detector
 
 **Model:** [`capcheck/ai-human-generated-image-detection`](https://huggingface.co/capcheck/ai-human-generated-image-detection)
 
-This model provides a second classification perspective, distinguishing human-generated images from AI-generated images.
+This model distinguishes human-generated images from AI-generated images. StressLens uses it as a second source of predictions for comparison with the primary detector.
 
-Its output is compared with the primary detector to identify agreement or disagreement. However, two model predictions are not equivalent to two independent confirmations of the image's authenticity.
+In exploratory testing, the secondary detector appeared to predict **human-generated even for an image identified as AI-generated**.
 
-### Why use two models?
+If systematic testing confirms this pattern, possible explanations include poor generalization, training-data limitations, preprocessing differences, or incorrect interpretation of the model's output labels and scores.
 
-Using two detectors makes disagreement visible. For example, one model may classify an image as fake while the other classifies it as human-generated.
+The current observations do not establish which explanation is correct.
 
-This is an important diagnostic signal, but disagreement alone does not establish which model is correct. Both models may be wrong, and their errors may be correlated because of overlapping training data, architectures, or learned visual features.
+### Why compare two models?
 
-A future version should evaluate both models on a common, independently labelled benchmark and explicitly validate their class-label mappings and score semantics.
+The purpose of using two detectors is to expose differences in their behaviour, not to assume that agreement proves authenticity.
 
-## Robustness and Reliability Analysis
+Two models can disagree because they learn different visual patterns or respond differently to distribution shifts. They can also make correlated errors. A majority vote or a simple average of their scores would therefore not automatically produce a more reliable result.
 
-StressLens includes image-transformation tests designed to examine how stable detector outputs remain when an input image is modified.
+A meaningful comparison requires validated class mappings, consistent evaluation data, and ground-truth labels.
 
-| Test | Purpose |
+---
+
+## Observed Model Failure Pattern
+
+The current prototype has raised a specific concern about the reliability of both detection models.
+
+| Component | Preliminary observation | Why it matters |
+|---|---|---|
+| Primary detector | Appeared to classify images believed to be real as fake. | May produce false alarms if the behaviour persists. |
+| Secondary detector | Appeared to classify an AI-generated test image as human-generated. | May fail to flag synthetic content if the behaviour persists. |
+| Model comparison | The detectors produced conflicting predictions on an AI-generated test image. | Neither prediction should automatically be treated as definitive. |
+| Reliability analysis | Score changes under image transformations were examined. | Stability alone cannot establish correctness. |
+
+For one exploratory AI-generated image, the report recorded:
+
+- **Primary detector:** `FAKE`, with a reported AI-class score of approximately `0.7784`.
+- **Secondary detector:** `human`, with a reported AI-class score of approximately `0.0105`.
+
+These are observations from an individual test, not estimates of overall model performance.
+
+The pattern that the detectors appear to favour opposite classes is a hypothesis based on exploratory testing. It must be tested on a diverse, independently labelled dataset containing both authentic and AI-generated images before describing either model as consistently biased or systematically failing.
+
+### Why this matters
+
+A detector that produces misleading predictions can create two kinds of risk:
+
+- **False positives:** authentic images may be incorrectly labelled as AI-generated.
+- **False negatives:** AI-generated images may be incorrectly labelled as authentic.
+
+Both errors matter in security-sensitive settings. False positives can damage trust or reputation, while false negatives can allow synthetic media to go undetected.
+
+The key research problem is therefore not merely to obtain a prediction, but to establish when that prediction is dependable and how its limitations should be communicated.
+
+---
+
+## Robustness Testing
+
+StressLens includes image-transformation experiments to examine how detector outputs respond to changes in the input image.
+
+| Transformation | Purpose |
 |---|---|
-| Cropping | Examines sensitivity to changes in visible image regions and framing. |
+| Cropping | Examines sensitivity to image framing and visible content. |
 | Blurring | Tests sensitivity to reduced image detail. |
-| JPEG compression | Examines the effect of lossy compression artefacts. |
-| Resizing | Tests the effect of changes in image dimensions and resampling. |
-| Occlusion | Investigates whether predictions change when selected image regions are hidden. |
+| JPEG compression | Examines the effects of lossy compression. |
+| Resizing | Investigates the effects of image scaling and resampling. |
+| Occlusion | Examines how hiding selected regions affects model scores. |
 
-### What is measured?
+### Score-change analysis
 
-The analysis can compare:
-
-- Predicted labels before and after transformation.
-- Changes in model-reported scores.
-- Label changes, where observed.
-- Differences between the primary and secondary models.
-- Regional score changes during occlusion analysis.
-
-For a score \(s\), the absolute score change can be expressed as:
+For a model score \(s\), the absolute change between the original and transformed image can be expressed as:
 
 \[
-\Delta s = |s_{\text{transformed}} - s_{\text{original}}|
+\Delta s = |s_{\mathrm{transformed}} - s_{\mathrm{original}}|
 \]
 
-A small score change indicates stability for that particular transformation and input. It does **not** prove that the original prediction is correct.
+A small change suggests that the score was stable under that particular transformation. A large change suggests sensitivity to the modification.
 
-Likewise, a large score change may indicate sensitivity to the transformation, but further experiments are required to determine its significance.
+However, **a stable prediction can still be wrong**. Robustness testing must therefore be interpreted alongside ground-truth accuracy, calibration, and evaluation across different datasets.
 
-### An important distinction
+Common image transformations also do not cover every possible adversarial attack. Deliberately designed evasion methods require separate threat models and controlled experiments.
 
-**Robustness is not the same as accuracy.** A model can consistently produce the wrong answer. A model can also produce a correct answer on one image but fail on another image generated by an unfamiliar system.
-
-StressLens therefore treats transformation testing as one component of reliability analysis, not as a substitute for ground-truth evaluation.
-
-## Observed Research Problem
-
-During an exploratory test of an image identified by the project owner as AI-generated, the two detectors produced conflicting outputs:
-
-- The primary detector predicted **FAKE**, with a reported AI-class score of approximately **0.7784**.
-- The secondary detector predicted **human**, with a reported AI-class score of approximately **0.0105**.
-
-These values are observations from an individual test, not estimates of either model's overall accuracy.
-
-The disagreement raises several research questions:
-
-1. Are the models interpreting their output labels and class scores correctly?
-2. Do the models generalize to the image generator used to create the test image?
-3. Are their score values comparable, and are those scores calibrated probabilities?
-4. Do similar disagreements occur across a larger and more diverse test dataset?
-5. Can uncertainty estimates help distinguish reliable predictions from ambiguous cases?
-
-The correct response to disagreement is not to arbitrarily select one model as correct. Instead, the system should expose the disagreement, validate the underlying model outputs, and communicate uncertainty.
+---
 
 ## Research Gaps and Limitations
 
-### 1. Limited evaluation data
+### 1. No comprehensive benchmark evaluation yet
 
-A small collection of example images cannot establish general detection performance.
+Exploratory examples cannot establish model accuracy, false-positive rates, false-negative rates, or generalization.
 
-**Research opportunity:** Evaluate on a larger, balanced dataset containing authentic photographs and AI-generated images from multiple sources, with clear provenance and independently verified labels.
+**Research gap:** The detectors need to be evaluated on a sufficiently large and diverse dataset with verified labels.
 
-### 2. Generalization to new generators
+### 2. Possible systematic misclassification
 
-Detectors may perform differently on image generators or generation methods not represented in their training data.
+The observed predictions raise the possibility that one or both models may perform poorly on the tested image distribution.
 
-**Research opportunity:** Use cross-generator evaluation, where models are tested on generators excluded from training or development datasets.
+**Research gap:** It remains unclear whether the behaviour results from model limitations, distribution shift, preprocessing, label mapping, or score extraction.
 
-### 3. Model disagreement and score semantics
+### 3. Unverified score calibration
 
-Conflicting predictions may arise from genuine model differences, domain shift, preprocessing, or incorrect interpretation of model outputs.
+A model-reported score is not automatically a calibrated probability of authenticity or synthetic origin.
 
-**Research opportunity:** Verify class-index mappings, inspect raw logits and class probabilities, standardize preprocessing, and evaluate disagreement against known ground truth.
+**Research gap:** Score semantics must be verified, and calibration should be measured against known labels before probabilities are presented as reliable uncertainty estimates.
 
-### 4. Uncertainty quantification
+### 4. Limited generalization testing
 
-A model's reported confidence score is not automatically a calibrated measure of the probability that its prediction is correct.
+AI-generated images can differ considerably across generators, prompts, editing methods, and post-processing pipelines.
 
-**Research opportunity:** Investigate calibration methods and uncertainty-aware decision rules. Evaluate calibration with appropriate metrics, such as expected calibration error and Brier score, alongside accuracy and discrimination metrics.
+**Research gap:** Cross-generator and out-of-distribution evaluations are needed to determine how performance changes on unfamiliar content.
 
 ### 5. Limited explainability
 
-An explanation based only on changes in prediction scores does not necessarily reveal the features or reasoning responsible for a decision.
+A score change after occlusion can reveal sensitivity to a region, but it does not necessarily explain the complete reasoning behind a prediction.
 
-**Research opportunity:** Compare explanation methods, investigate whether highlighted regions faithfully reflect model behaviour, and measure explanation stability across transformations.
+**Research gap:** Explanation methods need to be assessed for faithfulness, stability, and usefulness rather than judged solely by visual appearance.
 
-### 6. Narrow modality coverage
+### 6. Limited adversarial evaluation
 
-The current prototype focuses on image classification. It does not establish the authenticity of audio, video, text, or multimodal content.
+Cropping, blur, resizing, and compression are useful robustness tests, but they do not constitute a comprehensive adversarial security evaluation.
 
-**Research opportunity:** Extend evaluation to video, audio, and cross-modal consistency, while carefully validating each modality-specific detector.
+**Research gap:** Future work should test defined attack scenarios and defensive strategies under explicit threat models.
 
-### 7. Security against adaptive attacks
+### 7. Image-only scope
 
-Ordinary image transformations are not equivalent to adversarial attacks. A malicious actor may deliberately modify content to evade a detector.
+The current prototype focuses on images and does not establish the reliability of audio, video, or multimodal detection.
 
-**Research opportunity:** Develop controlled threat models and evaluate both adaptive attacks and defensive strategies under clearly defined assumptions.
+**Research gap:** Multimodal methods could be investigated as a future extension, with independent evaluation of each modality and cross-modal consistency.
 
-## Future Research Roadmap
+---
 
-The following directions represent proposed work, not capabilities already validated by the current prototype.
+## Future Research and Proposed Solutions
 
-### Phase 1 — Validate the existing pipeline
+The following roadmap describes possible research directions. These are proposed improvements, not capabilities already validated by StressLens.
 
-- Inspect raw model outputs and class-index mappings.
-- Verify the conversion from model outputs to reported AI-class scores.
-- Standardize and document preprocessing.
-- Add tests for score extraction and label interpretation.
-- Record model versions and experimental settings.
+### Phase 1: Verify model outputs and implementation
 
-### Phase 2 — Build a reproducible benchmark
+Before changing or replacing the models, the first step is to establish that the application interprets their outputs correctly.
 
-- Collect a diverse, appropriately licensed dataset of authentic and AI-generated images.
-- Record provenance, generation methods, and transformations where known.
-- Use independent data splits to reduce leakage.
-- Evaluate accuracy, precision, recall, F1 score, ROC-AUC, and relevant calibration metrics.
-- Report confidence intervals and performance across different generator families.
+Planned work:
 
-### Phase 3 — Improve reliability and uncertainty handling
+- Inspect each model's configuration and class-index mapping.
+- Compare raw logits, predicted class indices, and post-processed scores.
+- Verify that the application maps `REAL`, `FAKE`, `human`, and `AI-generated` labels consistently.
+- Confirm image preprocessing against each model's intended input requirements.
+- Add unit tests for label mapping and score extraction.
+- Record model versions and evaluation settings.
 
-- Establish rules for reporting model agreement and disagreement.
-- Evaluate whether calibrated scores improve decision-making.
-- Investigate abstention or an “inconclusive” outcome when evidence is insufficient.
-- Measure performance under distribution shift and common image transformations.
-- Test whether robustness results generalize across datasets.
+**Goal:** Distinguish implementation errors from genuine model-performance limitations.
 
-### Phase 4 — Develop faithful explanations
+### Phase 2: Evaluate on labelled data
 
-- Compare occlusion-based analysis with established explanation techniques.
-- Evaluate whether explanations reflect the actual behaviour of the detector.
-- Measure explanation stability under input transformations.
-- Clearly distinguish observed model behaviour from hypotheses about why a model made a prediction.
+Build an evaluation dataset containing authentic photographs and AI-generated images from multiple sources.
 
-### Phase 5 — Extend toward AI Security
+Planned work:
 
-- Investigate adaptive evasion and adversarial robustness under controlled threat models.
-- Explore ensembles and evidence aggregation without assuming that combining models automatically improves reliability.
-- Consider multimodal detection and cross-modal consistency checking.
-- Explore LLM-assisted reporting that translates technical findings into understandable explanations without inventing evidence.
-- Evaluate explanation faithfulness, uncertainty communication, and usefulness for human decision-makers.
+- Define inclusion criteria and verify ground-truth labels.
+- Separate development data from held-out evaluation data.
+- Avoid duplicates and prevent data leakage where possible.
+- Evaluate each model independently before comparing their outputs.
+- Report accuracy, precision, recall, F1 score, ROC-AUC, confusion matrices, and confidence intervals.
+- Examine false positives and false negatives separately.
+
+**Goal:** Determine whether the suspected failure pattern persists and quantify its severity.
+
+### Phase 3: Investigate distribution shift
+
+Test the models across image sources and generation methods that differ from the data used during development.
+
+Planned work:
+
+- Evaluate across multiple image-generation systems.
+- Compare original images with transformed versions.
+- Examine performance on unfamiliar generators and post-processing pipelines.
+- Identify conditions associated with sharp performance degradation.
+
+**Goal:** Understand when and why the detectors fail to generalize.
+
+### Phase 4: Improve uncertainty and decision-making
+
+If evaluation shows that the detectors are unreliable in certain conditions, the application should communicate that limitation rather than present a definitive classification.
+
+Planned work:
+
+- Evaluate probability calibration using suitable metrics.
+- Investigate uncertainty-aware thresholds.
+- Introduce an inconclusive or abstention outcome when evidence is insufficient.
+- Report disagreement explicitly.
+- Compare decision rules against ground-truth evaluation results.
+
+**Goal:** Reduce the risk that users mistake a model output for proof of authenticity.
+
+### Phase 5: Investigate explanations and adversarial robustness
+
+Planned work:
+
+- Compare occlusion analysis with established feature-attribution methods.
+- Evaluate explanation faithfulness and stability.
+- Test controlled adversarial and evasion scenarios.
+- Explore defensive methods and model ensembles.
+- Investigate whether explanations help users make better-informed decisions.
+
+**Goal:** Move from reporting predictions to evaluating whether the system's behaviour can be understood and trusted under defined conditions.
+
+### Phase 6: Explore multimodal security
+
+A later version could investigate synthetic audio, video, and text, including consistency between modalities.
+
+Potential directions include foundation-model-based approaches, cross-modal consistency checking, and LLM-assisted explanations. These extensions would require new models, evaluation datasets, and security testing.
+
+**Goal:** Explore how evidence from multiple modalities might contribute to synthetic-media analysis without assuming that multimodal systems are automatically more reliable.
+
+---
 
 ## Project Structure
-
-The current repository is organized as follows:
 
 ```text
 stresslens/
@@ -265,17 +327,27 @@ stresslens/
     └── pdf_report.py
 ```
 
-The application entry point is `app.py`. The `stresslens/` package contains the detector integrations, evaluation and robustness logic, explanation utilities, and report-generation components.
+- `app.py` — Streamlit application entry point.
+- `detector.py` — primary detector integration.
+- `secondary_detector.py` — secondary detector integration.
+- `evaluation.py` — evaluation utilities.
+- `robustness.py` — image-transformation testing.
+- `reliability.py` — reliability-analysis utilities.
+- `explain.py` — explanation-related functionality.
+- `llm_note.py` — LLM-based reporting functionality, subject to its configured dependencies.
+- `pdf_report.py` — PDF report generation.
 
-The `Image for model test/` directory in the repository contains an example image used during exploratory testing. It should not be treated as a representative benchmark dataset.
+The `Image for model test/` directory contains an example image used during exploratory testing. It is not a representative benchmark dataset, and the image alone cannot establish model accuracy.
+
+---
 
 ## Installation
 
 ### Prerequisites
 
-- Python compatible with the dependencies in `requirements.txt`
+- Python version compatible with the packages in `requirements.txt`
 - Git
-- Internet access to download pretrained models from Hugging Face on first use
+- Internet access to download pretrained models when required
 
 ### 1. Clone the repository
 
@@ -307,40 +379,39 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-## Running StressLens
+## Run the Application
 
-Start the Streamlit application from the project root:
+Start StressLens from the repository root:
 
 ```bash
 python -m streamlit run app.py
 ```
 
-Streamlit will provide a local URL in the terminal. Open that URL in your browser to use the application.
+Open the local URL shown in the terminal.
 
-The first model-loading run may take longer because pretrained model files may need to be downloaded. Runtime and memory requirements depend on the selected models and hosting environment.
+The initial run may take longer while pretrained models are downloaded. Resource requirements and execution time depend on the models, dependencies, and hosting environment.
+
+---
 
 ## Responsible Use
 
-StressLens is an experimental research prototype, not a forensic authentication system.
+StressLens is an experimental research prototype. It is not a forensic authentication service and should not be used as the sole basis for high-stakes decisions.
 
-- A detector's prediction is not proof that an image is authentic or synthetic.
-- Model scores should not be interpreted as calibrated probabilities unless calibration has been evaluated.
-- Disagreement between models does not independently establish which prediction is correct.
+- A prediction does not prove that an image is authentic or AI-generated.
+- A model's reported score should not be described as a calibrated probability unless calibration has been evaluated.
+- Agreement between two models does not guarantee correctness.
+- Disagreement should be reported transparently rather than resolved by arbitrarily choosing one detector.
 - Robustness under a limited set of transformations does not guarantee resistance to adversarial attacks.
-- Results should not be used as the sole basis for high-stakes decisions involving people, organizations, or public claims.
 - Images should be handled with appropriate attention to privacy, consent, copyright, and data retention.
+- Users should consult the underlying models' documentation and licensing conditions before deployment or redistribution.
 
-Users and researchers should consult the model cards and licensing conditions of the underlying models before redistribution or deployment.
+## Research Significance
 
-## Research Direction
+StressLens began as a practical exploration of synthetic-image detection but has raised a broader reliability question: **what should an AI security system do when its detectors appear to produce systematically misleading predictions?**
 
-StressLens provides a starting point for exploring a broader research question:
+The project creates a foundation for investigating model validation, distribution shift, robustness, uncertainty quantification, and explainable AI. Its next stage is to move from exploratory observations to systematic, reproducible evaluation.
 
-> **How can synthetic-media detection systems become more reliable, robust, and explainable when facing model disagreement, distribution shift, and adversarial manipulation?**
-
-The long-term direction is to move beyond isolated predictions toward evidence-based reliability assessment, transparent uncertainty communication, faithful explanations, and systematic evaluation.
-
-This direction connects the prototype to research themes in AI Security, adversarial machine learning, synthetic-media detection, and Explainable AI.
+The long-term aim is to investigate how synthetic-media detection systems can communicate not only their predictions, but also the limitations and uncertainty associated with those predictions.
 
 ## Acknowledgements
 
@@ -349,8 +420,8 @@ StressLens uses pretrained models published on Hugging Face:
 - [`dima806/ai_vs_real_image_detection`](https://huggingface.co/dima806/ai_vs_real_image_detection)
 - [`capcheck/ai-human-generated-image-detection`](https://huggingface.co/capcheck/ai-human-generated-image-detection)
 
-Please consult the respective model cards for training details, intended use, limitations, and licensing.
+Please consult each model card for information about training data, intended use, limitations, and licensing.
 
 ## License
 
-See [`LICENSE`](LICENSE) for the license applicable to this repository. The licensing conditions of the underlying pretrained models and third-party dependencies may differ and should be checked separately.
+See [`LICENSE`](LICENSE) for the license applicable to this repository. The underlying models and third-party dependencies may have separate licensing conditions.
